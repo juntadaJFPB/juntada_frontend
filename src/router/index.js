@@ -20,7 +20,7 @@ var router = new VueRouter({
             meta: {
                 admin: true,
                 super: true,
-                usuario: false,
+                usuario: true,
             },
 
         },
@@ -53,7 +53,7 @@ var router = new VueRouter({
             meta: {
                 admin: true,
                 super: true,
-                usuario: false,
+                usuario: true,
             },
         },
         {
@@ -73,7 +73,7 @@ var router = new VueRouter({
             meta: {
                 admin: true,
                 super: true,
-                usuario: false,
+                usuario: true,
             },
         },
         {
