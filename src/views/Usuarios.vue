@@ -65,6 +65,7 @@
 
                   <v-icon
                     big
+                    size="22"
                     class="mr-2"
                     @click="ativarDesativar(item)"
                     style="color: #F24607;"
@@ -80,6 +81,7 @@
 
                   <v-icon
                     big
+                    size ="22"
                     class="mr-2"
                     @click="ativarDesativar(item)"
                     style="color: #49D907; "
@@ -89,7 +91,7 @@
                 </a-tooltip>
 
                 <a-tooltip placement="right">
-                  <Span>----</Span>
+                  <Span>-</Span>
                 </a-tooltip>
 
                 <a-tooltip placement="right">
@@ -165,6 +167,25 @@
                     </a-select>
                   </a-form-item>
                 </a-col>
+
+                
+                  <a-col :span="24">
+                    <a-form-item has-feedback label="Perfil">
+                      <a-select
+                        v-model="editUsuario.perfil_id"
+                        placeholder="Perfil"
+                      >
+                        <a-select-option
+                          v-for="perfil in listaPerfis"
+                          :key="perfil.value"
+                          :value="perfil.value"
+                        >
+                          {{ perfil.text }}
+                        </a-select-option>
+                      </a-select>
+                    </a-form-item>
+                  </a-col>
+                
               </a-row>
             </a-form>
 
@@ -208,6 +229,7 @@ export default {
         { text: "Login", value: "usuario", sortable: false },
         { text: "Papel", value: "papel_id", sortable: true },
         { text: "Setor", value: "setor.descricao", sortable: true },
+        { text: "Perfil", value: "perfil.descricao", sortable: true },
         { text: "Status", value: "ativo", sortable: true },
       ],
       editedIndex: -1,
@@ -228,6 +250,7 @@ export default {
         usuario: "",
         setorId: "",
         papel_id: "",
+        perfil_id: "",
       },
 
       adModal: false,
@@ -235,6 +258,8 @@ export default {
       adNome: "",
       adId: "",
       visible: false,
+
+      listaPerfis: [],
     };
   },
 
@@ -257,6 +282,7 @@ export default {
   created() {
     this.listar();
     this.listarSetores();
+    this.listarPerfil()
   },
 
   methods: {
@@ -281,6 +307,7 @@ export default {
       this.editUsuario.id = item.id;
       this.editUsuario.setorId = item.setor.id;
       this.editUsuario.papel_id = item.papel_id;
+      this.editUsuario.perfil_id = item.perfil_id;
     },
 
     alterar() {
@@ -288,7 +315,8 @@ export default {
       axios
         .put(
           `/usuarios/${this.editUsuario.id}`,
-          this.editUsuario , this.configuration
+          this.editUsuario,
+          this.configuration
         )
         .then((res) => {
           if (res.data.success) {
@@ -322,20 +350,40 @@ export default {
       //    rota = `/usuarios/setor/${this.usuario.setor.id}`
       // }
       axios
-        .get(rota , this.configuration)
+        .get(rota, this.configuration)
         .then(function(response) {
           me.persons = response.data.usuarios;
           // remove o usuario logado da lista para que ele não possa alterar seus dados
-          let arr = me.persons.filter((x) => {
-            return x.nome !== me.usuario.nome;
-          });
-          me.persons = arr;
+          // let arr = me.persons.filter((x) => {
+          //   return x.nome !== me.usuario.nome;
+          // });
+          // me.persons = arr;
         })
         .catch(function(error) {
           // eslint-disable-line no-unused-vars
         });
     },
-
+    listarPerfil() {
+      let me = this;
+      let perfil = [];
+      let rota = "/perfil";
+      me.axios
+        .get(rota, me.configuration)
+        .then((res) => {
+          perfil = res.data.perfil;
+         
+          for (let pef of perfil) {
+             console.log(pef)
+            me.listaPerfis.push({
+              text: pef.descricao,
+              value: pef.id,
+            });
+          }
+        })
+        .catch(function(error) {
+          // eslint-disable-line no-unused-vars
+        });
+    },
     listarSetores() {
       let me = this;
       let setores = [];
@@ -347,7 +395,7 @@ export default {
       // }
 
       this.axios
-        .get(rota , me.configuration)
+        .get(rota, me.configuration)
         .then(function(response) {
           if (user.papel.descricao !== "super") {
             setores.push(response.data.setor);

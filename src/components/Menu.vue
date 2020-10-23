@@ -14,26 +14,26 @@
       </v-btn>
     </router-link>
 
-        <router-link to="/relatorio_erros">
+      <router-link to="/relatorio_erros">
       <v-btn text large color="white">
         <v-icon left>mdi-android-debug-bridge</v-icon>
         <span class="mr-2">Relatório Erros</span>
       </v-btn>
     </router-link>
-
-    <router-link to="/setores">
+  
+    <!-- <router-link to="/setores">
       <v-btn text large color="white">
         <v-icon left>mdi-view-dashboard</v-icon>
         <span class="mr-2">Setor</span>
       </v-btn>
-    </router-link>
+    </router-link> -->
 
-    <router-link to="/usuarios">
+    <!-- <router-link to="/usuarios">
       <v-btn text large color="white">
         <v-icon left>mdi-account-plus</v-icon>
         <span class="mr-2">Usuario</span>
       </v-btn>
-    </router-link>
+    </router-link> -->
 
     <router-link to="/login">
       <v-btn text large color="white" @click="sair">

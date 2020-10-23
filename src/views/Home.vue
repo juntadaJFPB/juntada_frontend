@@ -21,6 +21,22 @@
           </span>
         </template>
 
+        <template v-slot:[`item.action`]="{ item }">
+          <a-tooltip placement="left" v-if="item.ativo == 1">
+            <template slot="title">
+              <span>Excluir</span>
+            </template>
+
+            <v-icon
+              big
+              class="mr-2"
+              @click="excluir(item)"
+              style="color: #F24607;"
+            >
+              mdi-close-thick
+            </v-icon>
+          </a-tooltip>
+        </template>
         <template v-slot:top>
           <v-toolbar flat>
             <v-toolbar-title>Processos</v-toolbar-title>
@@ -78,12 +94,8 @@
             <template slot="title">
               <span>Atualizar Informações </span>
             </template>
-
-            <a-button
-              @click="editar(item)"
-              size="small"
-              v-if="item.anexo.length != 0"
-            >
+            <!-- v-if="item.anexo.length != 0" -->
+            <a-button @click="editar(item)" size="small">
               <a-icon type="edit"></a-icon>
             </a-button>
           </a-tooltip>
@@ -101,7 +113,12 @@
       <a-form :form="form">
         <a-form-item>
           <p>Escolha um arquivo para ser anexado a movimentação</p>
-          <a-input v-model="arquivo_upload"  @change="setFile" type="file" style="padding:2px" />
+          <a-input
+            v-model="arquivo_upload"
+            @change="setFile"
+            type="file"
+            style="padding:2px"
+          />
         </a-form-item>
         <!-- <a-form-item label="Observações:">
             <a-textarea
@@ -200,16 +217,14 @@
           />
         </a-form-item>
         <a-form-item label="Data">
-            <a-input
+          <a-input
             placeholder="Data - DD/MM/YYYY"
             v-model="data"
             v-mask="'##/##/####'"
             v-decorator="[
               'data',
               {
-                rules: [
-                  { required: true, message: 'Data necessaria.' },
-                ],
+                rules: [{ required: true, message: 'Data necessaria.' }],
               },
             ]"
           />
@@ -245,6 +260,11 @@
             </a-form-item>
           </a-col>
           <a-col :span="24">
+            <a-form-item label="Data">
+              <a-input v-model="editSetor.data"></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :span="24">
             <a-form-item label="Status BOT">
               <!-- <a-input v-model="editSetor.status_bot"></a-input> -->
               <a-select v-model="editSetor.status_bot">
@@ -263,7 +283,6 @@
 
       <template slot="footer">
         <a-button key="back" @click="cancelarEdicao">Cancelar</a-button>
-
         <a-button key="submit" type="primary" @click="alterar"
           >Alterar</a-button
         >
@@ -274,6 +293,7 @@
 
 <script>
 import locale from "ant-design-vue/es/date-picker/locale/pt_BR";
+import axios from "axios";
 
 export default {
   data() {
@@ -293,12 +313,13 @@ export default {
       expanded: [],
       arquivo_upload: "",
       headers: [
+        { text: "Excluir", value: "action", sortable: false },
         { text: "Número ", value: "numero_processo" },
         { text: "Destinatario", value: "destinatario" },
         { text: "Data", value: "data" },
         { text: "Status", value: "anexo" },
         { text: "Status BOT", value: "status_bot" },
-        { text: "Anexos", value: "anexos" },
+        { text: "Ações", value: "anexos" },
       ],
 
       uploadVisible: false,
@@ -323,8 +344,10 @@ export default {
         id: "",
         numero_processo: "",
         destinatario: "",
+        data: "",
         status_bot: "",
       },
+      idExcluir: ""
     };
   },
 
@@ -344,7 +367,7 @@ export default {
       //     rota = `/processos/setor/${this.usuario.setor.id}`;
       // }
       this.axios
-        .get(rota , this.configuration)
+        .get(rota, this.configuration)
         .then((res) => {
           this.correspondencia = res.data.correspondencia;
           console.log(res.data);
@@ -374,7 +397,8 @@ export default {
                 destinatario: this.destinatario,
                 data: this.data,
                 usuario_id: this.usuario.id,
-              }, /* data,*/ this.configuration
+              },
+              /* data,*/ this.configuration
             )
             .then((res) => {
               this.visibleAdd = false;
@@ -415,7 +439,7 @@ export default {
       data.append("anexo", this.file);
       data.append("cumprido", this.check);
       // data.append("observacoes", this.anexoModalObs);
-  
+
       this.axios
         .post(
           `/correspondencia/upload/${this.idUpload}`,
@@ -426,7 +450,7 @@ export default {
           if (res.data.success) {
             this.$message.success("Arquivo anexado a movimentação!");
           }
-          me.limparEdicao()
+          me.limparEdicao();
           me.cancelUpload();
           me.listaCorrespondencia();
           me.handleReset();
@@ -464,6 +488,7 @@ export default {
       this.editSetor.destinatario = item.destinatario;
       this.editSetor.status_bot = item.status_bot;
       this.editSetor.id = item.id;
+      this.editSetor.data = item.data;
     },
 
     cancelarEdicao() {
@@ -475,7 +500,8 @@ export default {
       me.axios
         .put(
           `/correspondencia/${me.editSetor.id}`,
-          me.editSetor , me.configuration
+          me.editSetor,
+          me.configuration
         )
         .then((res) => {
           if (res.data.success) {
@@ -494,10 +520,27 @@ export default {
       this.formUsuario = "";
       this.formId = "";
       this.check = "";
-      this.arquivo_upload = ""
+      this.arquivo_upload = "";
     },
     handleReset() {
       this.form.resetFields();
+    },
+
+    excluir(item){
+      const me = this
+
+      this.$confirm({
+        title: "Deseja excluir esse item?",
+        onOk() {
+          me.axios.delete(`correspondencia/delete/${item.id}`, this.configuration)
+          .then((response) =>{
+             if (response.data.success) {
+              this.$message.success("Correspondencia Removida!");
+          }
+          me.listaCorrespondencia()
+          })
+        },
+      })
     }
   },
 };

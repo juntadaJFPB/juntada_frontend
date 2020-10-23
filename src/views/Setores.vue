@@ -146,7 +146,6 @@ export default {
         return {
             atualiza: 0,
             dialog: false,
-
             search: "",
             setores: [],
             headers: [

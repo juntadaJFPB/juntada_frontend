@@ -6,6 +6,7 @@ import Usuarios from '../views/Usuarios.vue'
 import Setores from '../views/Setores.vue'
 import Relatorio from '../views/Relatorio.vue'
 import Relatorio_erros from '../views/Relatorio_erros.vue'
+import Perfil from '../views/Perfil.vue'
 Vue.use(VueRouter)
 
 var router = new VueRouter({
@@ -49,6 +50,16 @@ var router = new VueRouter({
             path: '/relatorio',
             name: 'Relatorio',
             component: Relatorio,
+            meta: {
+                admin: true,
+                super: true,
+                usuario: false,
+            },
+        },
+        {
+            path: '/perfil',
+            name: 'Perfil',
+            component: Perfil,
             meta: {
                 admin: true,
                 super: true,

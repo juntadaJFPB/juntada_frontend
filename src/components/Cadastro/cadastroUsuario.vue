@@ -146,16 +146,16 @@
                 placeholder="Perfil"
               >
                 <a-select-option
-                  v-for="perfil in perfis"
-                  :key="perfil"
-                  :value="perfil"
+                  v-for="perfil in listaPerfis"
+                  :key="perfil.value"
+                  :value="perfil.value"
                 >
-                  {{ perfil }}
+                  {{ perfil.text }}
                 </a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
-          </a-row>
+        </a-row>
       </a-form>
       <template slot="footer">
         <a-button :style="{ marginRight: '8px' }" @click="onClose">
@@ -184,29 +184,13 @@ export default {
       form: this.$form.createForm(this),
       visible: false,
       listaSetores: [],
-      perfis: [
-        "1ª VARA FEDERAL / João Pessoa / Diretor de Secretaria",
-        "1ª VARA FEDERAL / 1ª VARA FEDERAL / Diretor de Secretaria",
-        "2ª VARA FEDERAL / João Pessoa / Diretor de Secretaria",
-        "2ª VARA FEDERAL / 2ª VARA FEDERAL / Diretor de Secretaria",
-        "3ª VARA FEDERAL / 3ª VARA FEDERAL / Diretor de Secretaria",
-        "3ª VARA FEDERAL / 3ª VARA FEDERAL / Servidor Cadastrador",
-        "4ª VARA FEDERAL / 4ª VARA FEDERAL / Servidor Cadastrador",
-        "4ª VARA FEDERAL / 4ª VARA FEDERAL / Diretor de Secretaria",
-        "5ª VARA FEDERAL / 5ª VARA FEDERAL / Diretor de Secretaria",
-        "6ª VARA FEDERAL / 6ª VARA FEDERAL / Diretor de Secretaria",
-        "8ª VARA FEDERAL / 8ª VARA FEDERAL / Diretor de Secretaria",
-        "11ª VARA FEDERAL / 11ª VARA FEDERAL / Servidor Retificador",
-        "11ª VARA FEDERAL / 11ª VARA FEDERAL / Diretor de Secretaria",
-        "12ª VARA FEDERAL / 12ª VARA FEDERAL / Diretor de Secretaria",
-        "14º VARA FEDERAL / 14ª VARA FEDERAL / Diretor de Secretaria",
-        "Escritório de Inovação / João Pessoa / Estágiario",
-      ],
+      listaPerfis: [],
     };
   },
 
   created() {
     this.listarSetores();
+    this.listarPerfil();
   },
 
   methods: {
@@ -224,12 +208,13 @@ export default {
       // }
 
       this.axios
-        .get(rota , this.configuration)
+        .get(rota, this.configuration)
         .then((res) => {
           // if (this.usuarioLogado.papel.descricao !== 'super') {
           //   setores.push(res.data.setor)
           //} else {
           setores = res.data.setores;
+
           // }
           for (let setor of setores) {
             me.listaSetores.push({
@@ -242,7 +227,25 @@ export default {
           // eslint-disable-line no-unused-vars
         });
     },
-
+    listarPerfil() {
+      let me = this;
+      let perfil = [];
+      let rota = "/perfil";
+      me.axios
+        .get(rota, this.configuration)
+        .then((res) => {
+          perfil = res.data.perfil;
+          for (let pef of perfil) {
+            me.listaPerfis.push({
+              text: pef.descricao,
+              value: pef.id,
+            });
+          }
+        })
+        .catch(function(error) {
+          // eslint-disable-line no-unused-vars
+        });
+    },
     //Add Usuario
     cadastrarUsuario(e) {
       e.preventDefault();
@@ -254,10 +257,12 @@ export default {
               {
                 nome: values.nome,
                 usuario: values.usuario,
-                perfil: values.perfil,
+                // perfil: values.perfil,
                 setor_id: values.setor,
                 papel_id: values.papel,
-              } , this.configuration
+                perfil_id: values.perfil,
+              },
+              this.configuration
             )
             .then(() => {
               this.handleReset();
