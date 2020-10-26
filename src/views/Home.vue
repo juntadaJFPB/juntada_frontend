@@ -37,6 +37,21 @@
             </v-icon>
           </a-tooltip>
         </template>
+
+        <template v-slot:[`item.status_bot`]="{ item }">
+          <samp
+            style="color: #49D907; font-weight: bold;"
+            v-if="item.status_bot == 'Sucesso na tentativa'"
+          >Sucesso na tentativa</samp>
+          <samp
+            style="color: gray; font-weight: bold;"
+            v-if="item.status_bot == 'Não houve tentativa'"
+          >Não houve tentativa</samp>
+          <samp
+            style="color: #F24607; font-weight: bold;"
+            v-if="item.status_bot == 'Erro na tentativa'"
+          >Erro na tentativa</samp>
+        </template>
         <template v-slot:top>
           <v-toolbar flat>
             <v-toolbar-title>Processos</v-toolbar-title>
@@ -317,7 +332,7 @@ export default {
         { text: "Número ", value: "numero_processo" },
         { text: "Destinatario", value: "destinatario" },
         { text: "Data", value: "data" },
-        { text: "Status", value: "anexo" },
+        { text: "AR Carregado", value: "anexo" },
         { text: "Status BOT", value: "status_bot" },
         { text: "Ações", value: "anexos" },
       ],
@@ -338,7 +353,7 @@ export default {
 
       visible: false,
 
-      status_bot: ["Ainda nao houve tentativa", "Houve Tentativa", "Sucesso"],
+      status_bot: ["Não houve tentativa", "Erro na tentativa", "Sucesso na tentativa"],
 
       editSetor: {
         id: "",
@@ -347,7 +362,7 @@ export default {
         data: "",
         status_bot: "",
       },
-      idExcluir: ""
+      idExcluir: "",
     };
   },
 
@@ -388,7 +403,7 @@ export default {
 
       this.form.validateFields((err, values) => {
         if (!err) {
-          console.log(this.data);
+          if(this.validarNumeroProcesso(this.numero_processo) == true){
           this.axios
             .post(
               "/correspondencia/",
@@ -405,6 +420,10 @@ export default {
               this.listaCorrespondencia();
               this.cancel();
             });
+          }
+          else{
+          this.$message.error("Numero de Processo invalido!");
+        }
         }
       });
     },
@@ -526,22 +545,65 @@ export default {
       this.form.resetFields();
     },
 
-    excluir(item){
-      const me = this
+    excluir(item) {
+      const me = this;
 
       this.$confirm({
         title: "Deseja excluir esse item?",
         onOk() {
-          me.axios.delete(`correspondencia/delete/${item.id}`, this.configuration)
-          .then((response) =>{
-             if (response.data.success) {
-              this.$message.success("Correspondencia Removida!");
-          }
-          me.listaCorrespondencia()
-          })
+          me.axios
+            .delete(`correspondencia/delete/${item.id}`, me.configuration)
+            .then((response) => {
+              if (response.data.success) {
+                this.$message.success("Correspondencia Removida!");
+              }
+              me.listaCorrespondencia();
+            });
         },
-      })
-    }
+      });
+    },
+
+    validarNumeroProcesso(numero_processo) {
+      const bcmod = (x, y) => {
+        const take = 5;
+        let mod = "";
+
+        do {
+          let a = parseInt(mod + x.substr(0, take));
+          x = x.substr(take);
+          mod = a % y;
+        } while (x.length);
+
+        return mod;
+      };
+
+      // remove todos os pontos e traços
+      const numeroProcesso = numero_processo.replace(/[.-]/g, "");
+
+      if (numeroProcesso.length < 14 || isNaN(numeroProcesso)) {
+        return false;
+      }
+
+      const digitoVerificadorExtraido = parseInt(numeroProcesso.substr(-13, 2));
+
+      const vara = numeroProcesso.substr(-4, 4); // (4) vara originária do processo
+      const tribunal = numeroProcesso.substr(-6, 2); // (2) tribunal
+      const ramo = numeroProcesso.substr(-7, 1); // (1) ramo da justiça
+      const anoInicio = numeroProcesso.substr(-11, 4); // (4) ano de inicio do processo
+      const tamanho = numeroProcesso.length - 13;
+      const numeroSequencial = numeroProcesso
+        .substr(0, tamanho)
+        .padStart(7, "0"); // (7) numero sequencial dado pela vara ou juizo de origem
+
+      const digitoVerificadorCalculado =
+        98 -
+        bcmod(
+          numeroSequencial + anoInicio + ramo + tribunal + vara + "00",
+          "97"
+        );
+
+      return digitoVerificadorExtraido === digitoVerificadorCalculado;
+    },
   },
 };
 </script>
